@@ -110,6 +110,7 @@ struct Vector3 {
 	_FORCE_INLINE_ Vector3 project(const Vector3 &p_to) const;
 
 	_FORCE_INLINE_ real_t angle_to(const Vector3 &p_to) const;
+	_FORCE_INLINE_ real_t signed_angle_to(const Vector3 &p_to) const;
 	_FORCE_INLINE_ Vector3 direction_to(const Vector3 &p_to) const;
 
 	_FORCE_INLINE_ Vector3 slide(const Vector3 &p_normal) const;
@@ -230,6 +231,9 @@ real_t Vector3::angle_to(const Vector3 &p_to) const {
 	return Math::atan2(cross(p_to).length(), dot(p_to));
 }
 
+real_t Vector3::signed_angle_to(const Vector3 &p_to) const {
+	return Math::atan2(cross(p_to).length(), dot(p_to));
+}
 Vector3 Vector3::direction_to(const Vector3 &p_to) const {
 	Vector3 ret(p_to.x - x, p_to.y - y, p_to.z - z);
 	ret.normalize();
