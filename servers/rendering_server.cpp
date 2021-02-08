@@ -242,22 +242,24 @@ RID RenderingServer::_make_test_cube() {
 RID RenderingServer::make_sphere_mesh(int p_lats, int p_lons, float p_radius) {
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
+	const double lat_step = Math_TAU / p_lats;
+	const double lon_step = Math_TAU / p_lons;
 
 	for (int i = 1; i <= p_lats; i++) {
-		double lat0 = Math_PI * (-0.5 + (double)(i - 1) / p_lats);
+		double lat0 = lat_step * (i - 1) - Math_TAU / 4;
 		double z0 = Math::sin(lat0);
 		double zr0 = Math::cos(lat0);
 
-		double lat1 = Math_PI * (-0.5 + (double)i / p_lats);
+		double lat1 = lat_step * i - Math_TAU / 4;
 		double z1 = Math::sin(lat1);
 		double zr1 = Math::cos(lat1);
 
 		for (int j = p_lons; j >= 1; j--) {
-			double lng0 = 2 * Math_PI * (double)(j - 1) / p_lons;
+			double lng0 = lon_step * (j - 1);
 			double x0 = Math::cos(lng0);
 			double y0 = Math::sin(lng0);
 
-			double lng1 = 2 * Math_PI * (double)(j) / p_lons;
+			double lng1 = lon_step * j;
 			double x1 = Math::cos(lng1);
 			double y1 = Math::sin(lng1);
 
@@ -2369,12 +2371,8 @@ RenderingServer::RenderingServer() {
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/volumetric_fog/volume_size", PropertyInfo(Variant::INT, "rendering/volumetric_fog/volume_size", PROPERTY_HINT_RANGE, "16,512,1"));
 	GLOBAL_DEF("rendering/volumetric_fog/volume_depth", 128);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/volumetric_fog/volume_depth", PropertyInfo(Variant::INT, "rendering/volumetric_fog/volume_depth", PROPERTY_HINT_RANGE, "16,512,1"));
-	GLOBAL_DEF("rendering/volumetric_fog/use_filter", 0);
+	GLOBAL_DEF("rendering/volumetric_fog/use_filter", 1);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/volumetric_fog/use_filter", PropertyInfo(Variant::INT, "rendering/volumetric_fog/use_filter", PROPERTY_HINT_ENUM, "No (Faster),Yes (Higher Quality)"));
-	GLOBAL_DEF("rendering/volumetric_fog/directional_shadow_shrink", 512);
-	ProjectSettings::get_singleton()->set_custom_property_info("rendering/volumetric_fog/directional_shadow_shrink", PropertyInfo(Variant::INT, "rendering/volumetric_fog/directional_shadow_shrink", PROPERTY_HINT_RANGE, "32,2048,1"));
-	GLOBAL_DEF("rendering/volumetric_fog/positional_shadow_shrink", 512);
-	ProjectSettings::get_singleton()->set_custom_property_info("rendering/volumetric_fog/positional_shadow_shrink", PropertyInfo(Variant::INT, "rendering/volumetric_fog/positional_shadow_shrink", PROPERTY_HINT_RANGE, "32,2048,1"));
 
 	GLOBAL_DEF("rendering/spatial_indexer/update_iterations_per_frame", 10);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/spatial_indexer/update_iterations_per_frame", PropertyInfo(Variant::INT, "rendering/spatial_indexer/update_iterations_per_frame", PROPERTY_HINT_RANGE, "0,1024,1"));
