@@ -92,7 +92,7 @@ def configure(env):
         else:  # optimize for size
             env.Prepend(CCFLAGS=["-Os"])
 
-        if env["debug_symbols"] == "yes":
+        if env["debug_symbols"]:
             env.Prepend(CCFLAGS=["-g2"])
 
     elif env["target"] == "release_debug":
@@ -102,7 +102,7 @@ def configure(env):
             env.Prepend(CCFLAGS=["-Os"])
         env.Prepend(CPPDEFINES=["DEBUG_ENABLED"])
 
-        if env["debug_symbols"] == "yes":
+        if env["debug_symbols"]:
             env.Prepend(CCFLAGS=["-g2"])
 
     elif env["target"] == "debug":
@@ -127,6 +127,7 @@ def configure(env):
             env["CC"] = "clang"
             env["CXX"] = "clang++"
         env.extra_suffix = ".llvm" + env.extra_suffix
+        env.Append(LIBS=["atomic"])
 
     if env["use_lld"]:
         if env["use_llvm"]:
@@ -310,9 +311,8 @@ def configure(env):
 
     if os.system("pkg-config --exists alsa") == 0:  # 0 means found
         print("Enabling ALSA")
+        env["alsa"] = True
         env.Append(CPPDEFINES=["ALSA_ENABLED", "ALSAMIDI_ENABLED"])
-        # Don't parse --cflags, we don't need to add /usr/include/alsa to include path
-        env.ParseConfig("pkg-config alsa --libs")
     else:
         print("ALSA libraries not found, disabling driver")
 
@@ -320,20 +320,20 @@ def configure(env):
         if os.system("pkg-config --exists libpulse") == 0:  # 0 means found
             print("Enabling PulseAudio")
             env.Append(CPPDEFINES=["PULSEAUDIO_ENABLED"])
-            env.ParseConfig("pkg-config --cflags --libs libpulse")
+            env.ParseConfig("pkg-config --cflags libpulse")
         else:
             print("PulseAudio development libraries not found, disabling driver")
 
     if platform.system() == "Linux":
         env.Append(CPPDEFINES=["JOYDEV_ENABLED"])
-
         if env["udev"]:
             if os.system("pkg-config --exists libudev") == 0:  # 0 means found
                 print("Enabling udev support")
                 env.Append(CPPDEFINES=["UDEV_ENABLED"])
-                env.ParseConfig("pkg-config libudev --cflags --libs")
             else:
                 print("libudev development libraries not found, disabling udev support")
+    else:
+        env["udev"] = False  # Linux specific
 
     # Linkflags below this line should typically stay the last ones
     if not env["builtin_zlib"]:

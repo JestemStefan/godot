@@ -73,7 +73,7 @@ void CPUParticles3D::set_amount(int p_amount) {
 	}
 
 	particle_data.resize((12 + 4 + 4) * p_amount);
-	RS::get_singleton()->multimesh_allocate(multimesh, p_amount, RS::MULTIMESH_TRANSFORM_3D, true, true);
+	RS::get_singleton()->multimesh_allocate_data(multimesh, p_amount, RS::MULTIMESH_TRANSFORM_3D, true, true);
 
 	particle_order.resize(p_amount);
 }
@@ -152,6 +152,7 @@ float CPUParticles3D::get_speed_scale() const {
 }
 
 void CPUParticles3D::set_draw_order(DrawOrder p_order) {
+	ERR_FAIL_INDEX(p_order, DRAW_ORDER_MAX);
 	draw_order = p_order;
 }
 
@@ -372,7 +373,7 @@ void CPUParticles3D::set_particle_flag(ParticleFlags p_particle_flag, bool p_ena
 	ERR_FAIL_INDEX(p_particle_flag, PARTICLE_FLAG_MAX);
 	particle_flags[p_particle_flag] = p_enable;
 	if (p_particle_flag == PARTICLE_FLAG_DISABLE_Z) {
-		_change_notify();
+		notify_property_list_changed();
 	}
 }
 
@@ -575,7 +576,7 @@ void CPUParticles3D::_particles_process(float p_delta) {
 		cycle++;
 		if (one_shot && cycle > 0) {
 			set_emitting(false);
-			_change_notify();
+			notify_property_list_changed();
 		}
 	}
 
@@ -1011,6 +1012,7 @@ void CPUParticles3D::_update_particle_data_buffer() {
 			sorter.compare.particles = r;
 			sorter.sort(order, pc);
 		} else if (draw_order == DRAW_ORDER_VIEW_DEPTH) {
+			ERR_FAIL_NULL(get_viewport());
 			Camera3D *c = get_viewport()->get_camera();
 			if (c) {
 				Vector3 dir = c->get_global_transform().basis.get_axis(2); //far away to close
@@ -1072,7 +1074,7 @@ void CPUParticles3D::_update_particle_data_buffer() {
 		ptr += 20;
 	}
 
-	can_update = true;
+	can_update.set();
 }
 
 void CPUParticles3D::_set_redraw(bool p_redraw) {
@@ -1101,9 +1103,9 @@ void CPUParticles3D::_set_redraw(bool p_redraw) {
 void CPUParticles3D::_update_render_thread() {
 	MutexLock lock(update_mutex);
 
-	if (can_update) {
+	if (can_update.is_set()) {
 		RS::get_singleton()->multimesh_set_buffer(multimesh, particle_data);
-		can_update = false; //wait for next time
+		can_update.clear(); //wait for next time
 	}
 }
 
@@ -1165,7 +1167,7 @@ void CPUParticles3D::_notification(int p_what) {
 				ptr += 20;
 			}
 
-			can_update = true;
+			can_update.set();
 		}
 	}
 }
@@ -1445,13 +1447,6 @@ void CPUParticles3D::_bind_methods() {
 }
 
 CPUParticles3D::CPUParticles3D() {
-	time = 0;
-	inactive_time = 0;
-	frame_remainder = 0;
-	cycle = 0;
-	redraw = false;
-	emitting = false;
-
 	set_notify_transform(true);
 
 	multimesh = RenderingServer::get_singleton()->multimesh_create();
@@ -1459,23 +1454,8 @@ CPUParticles3D::CPUParticles3D() {
 	set_base(multimesh);
 
 	set_emitting(true);
-	set_one_shot(false);
 	set_amount(8);
-	set_lifetime(1);
-	set_fixed_fps(0);
-	set_fractional_delta(true);
-	set_pre_process_time(0);
-	set_explosiveness_ratio(0);
-	set_randomness_ratio(0);
-	set_lifetime_randomness(0);
-	set_use_local_coordinates(true);
 
-	set_draw_order(DRAW_ORDER_INDEX);
-	set_speed_scale(1);
-
-	set_direction(Vector3(1, 0, 0));
-	set_spread(45);
-	set_flatness(0);
 	set_param(PARAM_INITIAL_LINEAR_VELOCITY, 0);
 	set_param(PARAM_ANGULAR_VELOCITY, 0);
 	set_param(PARAM_ORBIT_VELOCITY, 0);
@@ -1501,8 +1481,6 @@ CPUParticles3D::CPUParticles3D() {
 	for (int i = 0; i < PARTICLE_FLAG_MAX; i++) {
 		particle_flags[i] = false;
 	}
-
-	can_update = false;
 
 	set_color(Color(1, 1, 1, 1));
 }

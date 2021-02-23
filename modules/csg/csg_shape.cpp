@@ -45,7 +45,8 @@ void CSGShape3D::set_use_collision(bool p_enable) {
 
 	if (use_collision) {
 		root_collision_shape.instance();
-		root_collision_instance = PhysicsServer3D::get_singleton()->body_create(PhysicsServer3D::BODY_MODE_STATIC);
+		root_collision_instance = PhysicsServer3D::get_singleton()->body_create();
+		PhysicsServer3D::get_singleton()->body_set_mode(root_collision_instance, PhysicsServer3D::BODY_MODE_STATIC);
 		PhysicsServer3D::get_singleton()->body_set_state(root_collision_instance, PhysicsServer3D::BODY_STATE_TRANSFORM, get_global_transform());
 		PhysicsServer3D::get_singleton()->body_add_shape(root_collision_instance, root_collision_shape->get_rid());
 		PhysicsServer3D::get_singleton()->body_set_space(root_collision_instance, get_world_3d()->get_space());
@@ -58,7 +59,7 @@ void CSGShape3D::set_use_collision(bool p_enable) {
 		root_collision_instance = RID();
 		root_collision_shape.unref();
 	}
-	_change_notify();
+	notify_property_list_changed();
 }
 
 bool CSGShape3D::is_using_collision() const {
@@ -494,7 +495,8 @@ void CSGShape3D::_notification(int p_what) {
 
 		if (use_collision && is_root_shape()) {
 			root_collision_shape.instance();
-			root_collision_instance = PhysicsServer3D::get_singleton()->body_create(PhysicsServer3D::BODY_MODE_STATIC);
+			root_collision_instance = PhysicsServer3D::get_singleton()->body_create();
+			PhysicsServer3D::get_singleton()->body_set_mode(root_collision_instance, PhysicsServer3D::BODY_MODE_STATIC);
 			PhysicsServer3D::get_singleton()->body_set_state(root_collision_instance, PhysicsServer3D::BODY_STATE_TRANSFORM, get_global_transform());
 			PhysicsServer3D::get_singleton()->body_add_shape(root_collision_instance, root_collision_shape->get_rid());
 			PhysicsServer3D::get_singleton()->body_set_space(root_collision_instance, get_world_3d()->get_space());
@@ -625,15 +627,6 @@ void CSGShape3D::_bind_methods() {
 }
 
 CSGShape3D::CSGShape3D() {
-	operation = OPERATION_UNION;
-	parent = nullptr;
-	brush = nullptr;
-	dirty = false;
-	snap = 0.001;
-	use_collision = false;
-	collision_layer = 1;
-	collision_mask = 1;
-	calculate_tangents = true;
 	set_notify_local_transform(true);
 }
 
@@ -1040,7 +1033,6 @@ void CSGSphere3D::set_radius(const float p_radius) {
 	radius = p_radius;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("radius");
 }
 
 float CSGSphere3D::get_radius() const {
@@ -1210,7 +1202,6 @@ void CSGBox3D::set_size(const Vector3 &p_size) {
 	size = p_size;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("size");
 }
 
 Vector3 CSGBox3D::get_size() const {
@@ -1392,7 +1383,6 @@ void CSGCylinder3D::set_radius(const float p_radius) {
 	radius = p_radius;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("radius");
 }
 
 float CSGCylinder3D::get_radius() const {
@@ -1403,7 +1393,6 @@ void CSGCylinder3D::set_height(const float p_height) {
 	height = p_height;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("height");
 }
 
 float CSGCylinder3D::get_height() const {
@@ -1613,7 +1602,6 @@ void CSGTorus3D::set_inner_radius(const float p_inner_radius) {
 	inner_radius = p_inner_radius;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("inner_radius");
 }
 
 float CSGTorus3D::get_inner_radius() const {
@@ -1624,7 +1612,6 @@ void CSGTorus3D::set_outer_radius(const float p_outer_radius) {
 	outer_radius = p_outer_radius;
 	_make_dirty();
 	update_gizmo();
-	_change_notify("outer_radius");
 }
 
 float CSGTorus3D::get_outer_radius() const {
@@ -2271,7 +2258,7 @@ void CSGPolygon3D::set_mode(Mode p_mode) {
 	mode = p_mode;
 	_make_dirty();
 	update_gizmo();
-	_change_notify();
+	notify_property_list_changed();
 }
 
 CSGPolygon3D::Mode CSGPolygon3D::get_mode() const {
